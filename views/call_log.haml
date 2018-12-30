@@ -1,0 +1,11 @@
+%h1 Call log
+%table
+  - @call_log.each do |call|
+    %tr
+      %td= call[:date]
+      %td= call[:name]
+      %td= call[:number]
+      %td= call[:type]
+      %td= call[:duration]
+
+
