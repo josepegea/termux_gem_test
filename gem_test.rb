@@ -7,6 +7,15 @@ require 'securerandom'
 enable :sessions
 set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
 
+require "sinatra/activerecord"
+require 'pg'
+
+set :database, {adapter: "postgresql", database: "phone_data"}
+
+# ActiveRecord::Base.default_timezone = :utc
+
+require './models.rb'
+
 before do
   puts(session)
   authenticate!
