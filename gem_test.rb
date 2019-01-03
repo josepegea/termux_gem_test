@@ -62,6 +62,25 @@ post '/speak' do
   redirect "/speak"
 end
 
+get '/map' do
+  haml :map, layout: :layout_map
+end
+
+get '/location_data.json' do
+  json_data = {
+    type: "Feature",
+    geometry: {
+      type: "LineString",
+      coordinates: Location
+        .all
+        .order(moment: :asc)
+        .pluck(:position)
+        .map { |p| [p[:x], p[:y]] }
+    }
+  }
+  json_data.to_json
+end
+
 def authenticate!
   if request.path_info != '/sign_in' && !session[:authenticated]
     redirect '/sign_in'
