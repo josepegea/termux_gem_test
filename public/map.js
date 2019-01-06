@@ -25,17 +25,28 @@ map.on('locationerror', onLocationError);
 map.locate({setView: true, maxZoom: 16});
 
 // Get the JSON data
-var xhttp = new XMLHttpRequest();
-xhttp.onreadystatechange = function() {
-  if (this.readyState == 4 && this.status == 200) {
-    var locationData = JSON.parse(xhttp.responseText);
-    var myStyle = {
-      "color": "#ff7800",
-      "weight": 5,
-      "opacity": 0.65
-    };
-    L.geoJSON(locationData, { style: myStyle }).addTo(map);
+$(() => {
+  var day = $("#datepicker").val();
+  showDayLocations(day);
+
+  $("#datepicker").change((event) => {
+    showDayLocations($(event.target).val());
+  });
+});
+
+var dayLayer;
+
+function showDayLocations(day = null) {
+  var url = '/location_data.json';
+  if (day) {
+    url += ('?day=' + day);
   }
-};
-xhttp.open("GET", "/location_data.json", true);
-xhttp.send();
+  $.ajax(url).done((data) => {
+    if (dayLayer) {
+      dayLayer.removeFrom(map);
+    }
+    dayLayer = L.geoJSON(JSON.parse(data));
+    dayLayer.addTo(map);
+    map.fitBounds(dayLayer.getBounds());
+  });
+}

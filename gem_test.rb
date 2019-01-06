@@ -67,12 +67,19 @@ get '/map' do
 end
 
 get '/location_data.json' do
+  start_date = get_date_from_params(:start_date, Date.today)
+  end_date = get_date_from_params(:end_date, start_date + 1)
+  if (day = get_date_from_params(:day))
+    start_date = day
+  end_date = day + 1
+  end
   json_data = {
     type: "Feature",
     geometry: {
       type: "LineString",
       coordinates: Location
-        .all
+        .where('moment >= ?', start_date.to_time)
+        .where('moment <= ?', end_date.to_time)
         .order(moment: :asc)
         .pluck(:position)
         .map { |p| [p[:x], p[:y]] }
@@ -93,4 +100,9 @@ end
 
 def api
   @api ||= TermuxRubyApi::Base.new
+end
+
+def get_date_from_params(key, default = nil)
+  value_for_key = params[key]
+  value_for_key ? Date.parse(value_for_key) : default
 end

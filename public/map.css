@@ -10,3 +10,10 @@ html, body {
 	width: 100%;
 	height: 100%;
 }
+#control-pane {
+  position: fixed;
+  right: 0px;
+  top: 0px;
+  z-index: 1000;
+  background-color: #fff;
+}
