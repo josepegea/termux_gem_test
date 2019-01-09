@@ -71,20 +71,39 @@ get '/location_data.json' do
   end_date = get_date_from_params(:end_date, start_date + 1)
   if (day = get_date_from_params(:day))
     start_date = day
-  end_date = day + 1
+    end_date = day + 1
   end
+  results = Location
+              .select(:moment, :position, "((raw->'speed')::float) * 3.6 as speed", "(raw->'altitude')::float as altitude")
+              .where('moment >= ?', start_date.to_time)
+              .where('moment <= ?', end_date.to_time)
+              .order(moment: :asc)
   json_data = {
-    type: "Feature",
-    geometry: {
-      type: "LineString",
-      coordinates: Location
-        .where('moment >= ?', start_date.to_time)
-        .where('moment <= ?', end_date.to_time)
-        .order(moment: :asc)
-        .pluck(:position)
-        .map { |p| [p[:x], p[:y]] }
-    }
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: results.map { |l| [l.position[:x], l.position[:y]] }
+        }
+      }
+    ]
   }
+  json_data[:features] += results.map do |l|
+    {
+      type: "Feature",
+      properties: {
+        moment: l[:moment],
+        speed: l[:speed],
+        altitude: l[:altitude]
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [l.position[:x], l.position[:y]]
+      }
+    }
+  end
   json_data.to_json
 end
 

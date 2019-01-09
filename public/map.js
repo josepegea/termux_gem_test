@@ -45,8 +45,14 @@ function showDayLocations(day = null) {
     if (dayLayer) {
       dayLayer.removeFrom(map);
     }
-    dayLayer = L.geoJSON(JSON.parse(data));
+    dayLayer = L.geoJSON(JSON.parse(data), {onEachFeature: onEachFeature});
     dayLayer.addTo(map);
     map.fitBounds(dayLayer.getBounds());
   });
+}
+
+function onEachFeature(feature, layer) {
+  if (feature.properties) {
+    layer.bindPopup(JSON.stringify(feature.properties));
+  }
 }
