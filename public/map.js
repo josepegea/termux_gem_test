@@ -45,14 +45,23 @@ function showDayLocations(day = null) {
     if (dayLayer) {
       dayLayer.removeFrom(map);
     }
-    dayLayer = L.geoJSON(JSON.parse(data), {onEachFeature: onEachFeature});
+    dayLayer = L.geoJSON(JSON.parse(data), {pointToLayer: pointToLayer, onEachFeature: onEachFeature});
     dayLayer.addTo(map);
     map.fitBounds(dayLayer.getBounds());
   });
 }
 
+function pointToLayer(feature, latlng) {
+  return L.circleMarker(latlng, {radius: 4 } );
+}
+
 function onEachFeature(feature, layer) {
   if (feature.properties) {
-    layer.bindPopup(JSON.stringify(feature.properties));
+    layer.bindPopup(contentForPopup(feature.properties));
   }
+}
+
+function contentForPopup(props) {
+  let terms = Object.keys(props).map((k) => `<dt>${k}</dt><dd>${props[k]}</dd>`);
+  return `<dl>${terms.join(' ')}</dl>`
 }

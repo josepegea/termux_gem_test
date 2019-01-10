@@ -74,7 +74,7 @@ get '/location_data.json' do
     end_date = day + 1
   end
   results = Location
-              .select(:moment, :position, "((raw->'speed')::float) * 3.6 as speed", "(raw->'altitude')::float as altitude")
+              .select(:moment, :position, :raw)
               .where('moment >= ?', start_date.to_time)
               .where('moment <= ?', end_date.to_time)
               .order(moment: :asc)
@@ -93,11 +93,7 @@ get '/location_data.json' do
   json_data[:features] += results.map do |l|
     {
       type: "Feature",
-      properties: {
-        moment: l[:moment],
-        speed: l[:speed],
-        altitude: l[:altitude]
-      },
+      properties: props_for_location(l),
       geometry: {
         type: "Point",
         coordinates: [l.position[:x], l.position[:y]]
@@ -124,4 +120,8 @@ end
 def get_date_from_params(key, default = nil)
   value_for_key = params[key]
   value_for_key ? Date.parse(value_for_key) : default
+end
+
+def props_for_location(l)
+  l.raw.merge(moment: l.moment)
 end
