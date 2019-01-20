@@ -1,5 +1,5 @@
-require "./gem_test"
-require "./lib/geo_utils"
+require "../gem_test"
+require "../lib/geo_utils"
 require 'pry'
 
 def main_loop

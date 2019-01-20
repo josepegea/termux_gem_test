@@ -2,6 +2,7 @@ PATH
   remote: ../termux_ruby_api
   specs:
     termux_ruby_api (0.1.0)
+      activesupport (~> 5.2.2)
 
 GEM
   remote: https://rubygems.org/

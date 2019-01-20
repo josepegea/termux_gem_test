@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_01_01_190645) do
+ActiveRecord::Schema.define(version: 2019_01_19_192853) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -20,6 +20,13 @@ ActiveRecord::Schema.define(version: 2019_01_01_190645) do
     t.float "altitude"
     t.float "accuracy"
     t.string "provider"
+    t.datetime "moment"
+    t.jsonb "raw"
+  end
+
+  create_table "sensor_statuses", force: :cascade do |t|
+    t.integer "steps"
+    t.integer "motion_type"
     t.datetime "moment"
     t.jsonb "raw"
   end
