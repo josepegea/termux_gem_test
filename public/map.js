@@ -34,7 +34,9 @@ $(() => {
   });
 });
 
-var dayLayer;
+let pathLayer, pathData;
+let locationsLayer, locationsData;
+let sensorStatusesLayer, sensorStatusesData;
 
 function showDayLocations(day = null) {
   var url = '/location_data.json';
@@ -42,17 +44,63 @@ function showDayLocations(day = null) {
     url += ('?day=' + day);
   }
   $.ajax(url).done((data) => {
-    if (dayLayer) {
-      dayLayer.removeFrom(map);
+    if (pathLayer) {
+      pathLayer.removeFrom(map);
     }
-    dayLayer = L.geoJSON(JSON.parse(data), {pointToLayer: pointToLayer, onEachFeature: onEachFeature});
-    dayLayer.addTo(map);
-    map.fitBounds(dayLayer.getBounds());
+    if (locationsLayer) {
+      locationsLayer.removeFrom(map);
+    }
+    if (sensorStatusesLayer) {
+      sensorStatusesLayer.removeFrom(map);
+    }
+    let jsonData = JSON.parse(data);
+    if (pathData = jsonData.path) {
+      pathLayer = L.geoJSON(pathData);
+      pathLayer.addTo(map);
+    }
+    if (locationsData = jsonData.locations) {
+      locationsLayer = L.geoJSON(locationsData, {pointToLayer: pointToLayer, onEachFeature: onEachFeature});
+      locationsLayer.addTo(map);
+    }
+    if (sensorStatusesData = jsonData.sensor_statuses) {
+      sensorStatusesLayer = L.geoJSON(sensorStatusesData, {pointToLayer: sensorPointToLayer, onEachFeature: onEachFeature});
+      sensorStatusesLayer.addTo(map);
+    }
+    map.fitBounds(pathLayer.getBounds());
   });
 }
 
 function pointToLayer(feature, latlng) {
   return L.circleMarker(latlng, {radius: 4 } );
+}
+
+function onEachFeature(feature, layer) {
+  if (feature.properties) {
+    layer.bindPopup(contentForPopup(feature.properties));
+  }
+}
+
+function sensorPointToLayer(feature, latlng) {
+  return L.circleMarker(latlng, {radius: 4, color: colorForSensorFeature(feature) } );
+}
+
+function colorForSensorFeature(feature) {
+  const colorsForFeatures = {
+    0: "#008",
+    1: "#228",
+    2: "#428",
+    3: "#628",
+    4: "#828",
+    5: "#826",
+    6: "#824",
+    7: "#822",
+    8: "#800"
+  };
+
+  if (!feature || !feature.properties || !feature.properties.motion_type) {
+    return "#444";
+  }
+  return colorsForFeatures[feature.properties.motion_type] || "#444";
 }
 
 function onEachFeature(feature, layer) {

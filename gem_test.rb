@@ -1,5 +1,6 @@
 require 'sinatra'
 require 'sinatra/reloader' if development?
+require 'pry' if development?
 require 'termux_ruby_api'
 require 'active_support/all'
 require 'securerandom'
@@ -17,7 +18,6 @@ set :database, {adapter: "postgresql", database: "phone_data"}
 require './models.rb'
 
 before do
-  puts(session)
   authenticate!
 end
 
@@ -27,9 +27,7 @@ end
 
 post '/sign_in' do
   res = api.json_api_command('fingerprint')
-  puts(res)
   if res && res[:auth_result] == 'AUTH_RESULT_SUCCESS'
-    puts("Success!!!")
     session[:authenticated] = true
     redirect('/')
   else
@@ -43,6 +41,11 @@ get '/sign_out' do
 end
 
 get '/' do
+  @steps_today = SensorStatus.today
+                   .select("sum(steps) as steps")
+                   .order("steps asc")
+                   .first
+                   .steps
   haml :index
 end
 
@@ -73,33 +76,57 @@ get '/location_data.json' do
     start_date = day
     end_date = day + 1
   end
-  results = Location
-              .select(:moment, :position, :raw)
+  loc_results = Location
+              .select(:moment, :position, :speed, :bearing, :raw)
               .where('moment >= ?', start_date.to_time)
               .where('moment <= ?', end_date.to_time)
               .order(moment: :asc)
+  sen_results = SensorStatus
+              .select(:moment, :position, :steps, :motion_type, :raw)
+              .where('moment >= ?', start_date.to_time)
+              .where('moment <= ?', end_date.to_time)
+              .order(moment: :asc)
+
   json_data = {
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        geometry: {
-          type: "LineString",
-          coordinates: results.map { |l| [l.position[:x], l.position[:y]] }
+    path: {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: loc_results.map { |l| [l.position[:x], l.position[:y]] }
+          }
         }
-      }
-    ]
-  }
-  json_data[:features] += results.map do |l|
-    {
-      type: "Feature",
-      properties: props_for_location(l),
-      geometry: {
-        type: "Point",
-        coordinates: [l.position[:x], l.position[:y]]
-      }
+      ]
+    },
+    locations: {
+      type: "FeatureCollection",
+      features: loc_results.map do |l|
+        {
+          type: "Feature",
+          properties: props_for_location(l),
+          geometry: {
+            type: "Point",
+            coordinates: [l.position[:x], l.position[:y]]
+          }
+        }
+      end
+    },
+    sensor_statuses: {
+      type: "FeatureCollection",
+      features: sen_results.select { |s| s.position.present? }.map do |s|
+        {
+          type: "Feature",
+          properties: { moment: s.moment, motion_type: s.motion_type, steps: s.steps },
+          geometry: {
+            type: "Point",
+            coordinates: [s.position[:x], s.position[:y]]
+          }
+        }
+      end
     }
-  end
+  }
   json_data.to_json
 end
 
@@ -123,5 +150,5 @@ def get_date_from_params(key, default = nil)
 end
 
 def props_for_location(l)
-  l.raw.merge(moment: l.moment)
+  l.attributes.slice(:moment, :position, :altitude, :speed, :bearing)
 end

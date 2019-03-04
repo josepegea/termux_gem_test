@@ -1,13 +1,13 @@
 %h1 Hello world
-%h2 #{Location.count} locations registered
+%h2 You walked #{@steps_today} steps today
 %ul
-  %li
+  %li.button
     = link_to("Call log", 'call_log')    
-  %li
+  %li.button
     = link_to("Speak", 'speak')
-  %li
+  %li.button
     = link_to("Map", 'map')
   %hr
-  %li
+  %li.button
     = link_to("Log out", 'sign_out')
     

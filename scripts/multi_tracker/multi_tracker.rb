@@ -44,6 +44,8 @@ class MultiTracker
     Location.create(position: [loc[:longitude], loc[:latitude]],
                     altitude: loc[:altitude],
                     accuracy: loc[:accuracy],
+                    speed:    loc[:speed],
+                    bearing:  loc[:bearing],
                     provider: loc[:provider],
                     moment: moment,
                     raw: loc)
